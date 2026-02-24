@@ -1,0 +1,39 @@
+name: netemo
+channels:
+  - bioconda
+  - pytorch
+  - conda-forge
+  - pyg
+dependencies:
+  - python=3.12
+# Utilities
+  - more-itertools
+  - tqdm
+  - fire
+# Scientific computing
+  - numpy
+  - scipy
+  - pandas
+# Plotting  
+  - seaborn
+  - matplotlib
+# Download tools
+  - gdown
+# Graph processing
+  - leidenalg
+  - igraph
+  - networkx
+# Machine Learning
+  - scikit-learn
+  - umap-learn
+  - pynndescent
+  - pytorch
+  - cpuonly
+  - torchvision
+  - torchaudio
+  - pyg=*=*cpu*
+# Bioinfo/single cell
+  - scanpy
+  - pip
+#  - pip:
+#    - anndata

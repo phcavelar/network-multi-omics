@@ -1,0 +1,92 @@
+name: nemo
+channels:
+  - nvidia
+  - pytorch
+  - dglteam
+  - pyg
+  - conda-forge
+  - bioconda
+  - defaults
+#channel_priority: true
+dependencies:
+# Basic libraries
+#  - python=3.8
+  - python
+  - ipykernel
+  - ipywidgets
+  - tqdm
+  - fire
+# Deep learning
+  - pytorch
+  - torchvision
+  - pytorch-cuda<=12.2
+  - lightning
+  - tensorboard
+  - torchmetrics
+  - pyg
+#  - dgl
+#  - jax
+#  - jaxlib=*=*cuda*
+#  - cuda-nvcc
+#  - flax
+#  - chex
+#  - optax=0.2.1
+# Scientific Computing
+  - numpy
+  - scipy<1.13
+  - scikit-learn
+  - umap-learn
+  - networkx
+  - arm-mango
+# Plotting
+  - plotnine
+  - seaborn
+# Utils
+  - more-itertools
+  - multidict
+  - frozenlist
+  - attrs
+  - gdown
+# Python Baselines
+#  - scvi
+# Single Cell libraries
+  - anndata
+#  - scanpy=1.9
+  - scanpy
+  - scikit-misc
+  - scikit-survival=0.23
+  - lifelines=0.30
+# https://github.com/scverse/scvi-tools/issues/1540
+  - scvi-tools
+  - python-igraph
+  - leidenalg
+  - harmonypy
+# R and R interfacing
+  - rpy2
+#  - r=4.2
+  - r
+#  - bioconductor-limma=3.50
+#  - bioconductor-limma=3.54
+  - bioconductor-limma
+#  - r-seurat=4.2
+  - r-seurat
+  - r-seuratdisk
+  - r-statmod
+#  - r-parallel=4.1
+#  - bioconductor-scater
+  - bioconductor-singlecellexperiment
+  - r-signac
+  - r-tidyverse
+# Pip and pip-installed libraries
+  - pip
+#  - pip:
+#    - git+https://github.com/LarsKue/lightning-trainable
+#    - torch_tb_profiler
+#    - giniclust3
+#    - git+https://github.com/rdong08/GiniClust3
+#    - git+https://github.com/theislab/multigrate
+# Multigrate requires multidict, frozenlist, attrs, async-timeout, yarl, aiosignal, aiohttp
+# Successfully installed aiohttp-3.9.5 aiosignal-1.3.1 async-timeout-4.0.3 attrs-23.2.0 frozenlist-1.4.1 multidict-6.0.5 multigrate-0.0.2 yarl-1.9.4
+# Successfully installed aiohttp-3.9.5 aiosignal-1.3.1 async-timeout-4.0.3 attrs-23.2.0 chex-0.1.86 frozenlist-1.4.1 jax-0.4.30 jaxlib-0.4.30 multidict-6.0.5 multigrate-0.0.2 yarl-1.9.4
+
+#  matplotlib=3.6   mudata jax ml-collections docrep pyro-ppl flax "jaxlib>0.4.5" chex scipy=1.10 "optax<0.2.2" numpyro xarray 
