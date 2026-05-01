@@ -29,13 +29,10 @@ import torch
 import torch.nn as nn
 
 # %%
-DATA_PATH = "~/data/netemo"
-DATA_PATH = os.path.expanduser(os.path.expandvars(DATA_PATH))
-MODEL_DIR = "models"
-RESULTS_PATH = "results"
-
-TCGA_PATH = "~/data/subtypemgtp"
-TCGA_PATH = os.path.expanduser(os.path.expandvars(TCGA_PATH))
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parents[2]))
+from config import DATA_PATH, MODEL_DIR, RESULTS_PATH, TCGA_PATH
 TCGA_cancers = ['BLCA', 'BRCA',
                 #'GBM', #no gbm prot.fea
                 'KIRC', 'LUAD',
