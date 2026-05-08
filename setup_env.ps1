@@ -16,7 +16,19 @@ if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
     }
 }
 
-Write-Host "Using $install_method to install packages in $env_name$env_postfix.yml"
+$is_windows_host = $env:OS -eq "Windows_NT"
 
-conda create -n $env_name
-& $install_method env update -n $env_name --file "yml/$env_name$env_postfix.yml"
+if ($is_windows_host) {
+    ${env_file} = "yml/$env_name$env_postfix`_win.yml"
+} else {
+    ${env_file} = "yml/$env_name$env_postfix.yml"
+}
+
+if (-not (Test-Path $env_file)) {
+    throw "Environment file not found: $env_file"
+}
+
+Write-Host "Using $install_method to install packages in $env_file"
+
+conda create -n $env_name -y
+& $install_method env update -n $env_name --file $env_file
