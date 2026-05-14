@@ -152,4 +152,4 @@ If you use SCONE in your research, please cite:
 
 ## License
 
-This project is licensed under the [see LICENSE file].
+See [LICENSE](LICENSE) for details.
