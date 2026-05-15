@@ -23,14 +23,12 @@ import torch.nn as nn
 from tqdm.autonotebook import tqdm
 
 # %%
-DATA_PATH = "~/data/netemo"
-DATA_PATH = os.path.expanduser(os.path.expandvars(DATA_PATH))
-MODEL_DIR = "models"
-RESULTS_PATH = "results"
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parents[2]))
+from config import DATA_PATH, MODEL_DIR, RESULTS_PATH, SCRNA_LINK, SCCITE_LINK
 SCRNA_FNAME = 'multi-expressions.h5ad'
-SCRNA_LINK = 'https://drive.google.com/uc?id=1wA3VBUnYEW2qHPk9WijNTKjV9KriWe8y',
 SCCITE_FNAME = 'multi-proteins.h5ad'
-SCCITE_LINK = 'https://drive.google.com/uc?id=112mdDX76LZRL33tBLYhfYRRXOUrLUhw-'
 NUM_REPS = 8
 
 # %%

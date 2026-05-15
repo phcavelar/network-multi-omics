@@ -11,21 +11,27 @@ import scanpy as sc
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from nemo.models.subsetcontrastive import SubsetContrastive
-
-import torch
-import torch.nn as nn
+import scvi
 
 # %%
-DATA_PATH = "~/data/netemo"
-DATA_PATH = os.path.expanduser(os.path.expandvars(DATA_PATH))
-MODEL_DIR = "models"
-RESULTS_PATH = "results"
-SCRNA_FNAME = 'kotliarov2020-expressions.h5ad'
-SCRNA_LINK = 'https://drive.google.com/uc?id=1wA3VBUnYEW2qHPk9WijNTKjV9KriWe8y',
-SCCITE_FNAME = 'kotliarov2020-proteins.h5ad'
-SCCITE_LINK = 'https://drive.google.com/uc?id=112mdDX76LZRL33tBLYhfYRRXOUrLUhw-'
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parents[2]))
+from config import (
+    DATA_PATH, MODEL_DIR, RESULTS_PATH,
+    SCRNA_FNAME, SCRNA_LINK,
+    SCCITE_FNAME, SCCITE_LINK,
+)
 NUM_REPS = 8
+
+HISTORY_KEYS = [
+    'train_loss_step',
+    'train_loss_epoch', 'validation_loss',
+    'elbo_train', 'elbo_validation',
+    'reconstruction_loss_train', 'reconstruction_loss_validation',
+    'kl_local_train', 'kl_local_validation',
+    'kl_global_train', 'kl_global_validation',
+]
 
 # %%
 data = {}
@@ -44,9 +50,6 @@ for data_type, data_fname, data_link in [
         data[data_type] = sc.read_h5ad(os.path.join(DATA_PATH,data_fname))
 
 # %%
-#sc.pp.scale(data["rna"])
-
-# %%
 num_plots=10
 plot_df = pd.melt(pd.DataFrame(data["cite"].layers["count"][:,:num_plots].A, columns=data["cite"].var.index[:num_plots], index=data["cite"].obs.index).reset_index(), id_vars="index")
 g = sns.kdeplot(data=plot_df, x="value", hue="variable", common_norm=False, legend=False)
@@ -60,48 +63,58 @@ plt.show()
 
 # %%
 #torch.set_float32_matmul_precision('medium') #Did not provide any significant speedup
+adata = data["rna"]
+adata.X = data["rna"].layers['count'].toarray()
+adata.obsm['proteins'] = np.zeros([adata.X.shape[0],1])
+scvi.model.TOTALVI.setup_anndata(adata, batch_key='batch', protein_expression_obsm_key='proteins')
+
+# %%
 
 for repetition in range(NUM_REPS):
-    gae = SubsetContrastive(
-        data,
-        {#"rna":nn.MSELoss(),
-         "cite":nn.MSELoss()},
-        0.2,
+    vae = scvi.model.TOTALVI(
+        adata,
+        latent_distribution="normal",
     )
-    tr_log = gae.train(data)
-    Xs = [torch.tensor(data[m].X) for m in gae.modalities]
-    As = [torch.tensor(np.stack(data[m].obsp["connectivities"].nonzero()), dtype=torch.long) for m in gae.modalities]
-    _, __, z = gae.model(Xs, As)
+    vae.train()
+    adata.obsm["X_totalVI"] = vae.get_latent_representation()
 
-    adz = sc.AnnData(z.detach().cpu().numpy())
-    adz.obs = data["rna"].obs
+    z = sc.AnnData(adata.obsm["X_totalVI"])
+    z.obs = adata.obs
 
     os.makedirs(os.path.join(DATA_PATH,RESULTS_PATH), exist_ok=True)
-    adz.write(os.path.join(DATA_PATH,RESULTS_PATH,f"kotliarov2020-subsetcontrastivePRO-{repetition}.h5ad"))
+    z.write(os.path.join(DATA_PATH,RESULTS_PATH,f"kotliarov2020-totalviRNA-{repetition}.h5ad"))
     os.makedirs(os.path.join(DATA_PATH,MODEL_DIR), exist_ok=True)
-    gae.save(os.path.join(DATA_PATH,MODEL_DIR,f"kotliarov2020-subsetcontrastivePRO-{repetition}.model"))
-    history_df = pd.DataFrame(tr_log)
-    history_df.to_csv(os.path.join(DATA_PATH,RESULTS_PATH,f"kotliarov2020-subsetcontrastivePRO-{repetition}-history.csv.gz"))
+    vae.save(os.path.join(DATA_PATH,MODEL_DIR,f"kotliarov2020-totalviRNA-{repetition}.model"))
+    HISTORY_KEYS = [
+        'train_loss_step',
+        'train_loss_epoch', 'validation_loss',
+        'elbo_train', 'elbo_validation',
+        'reconstruction_loss_train', 'reconstruction_loss_validation',
+        'kl_local_train', 'kl_local_validation',
+        'kl_global_train', 'kl_global_validation',
+    ]
+    history_df:pd.DataFrame = vae.history[HISTORY_KEYS[0]]
+    for this_plot_key in HISTORY_KEYS[1:]:
+        history_df = history_df.join(vae.history[this_plot_key])
+    history_df.to_csv(os.path.join(DATA_PATH,f"kotliarov2020-totalviRNA-{repetition}-history.csv.gz"))
 
 # %%
 # Load first model for diagnostic plots
-z = sc.read_h5ad(os.path.join(DATA_PATH,RESULTS_PATH,"kotliarov2020-subsetcontrastivePRO-0.h5ad"))
-history_df = pd.read_csv(os.path.join(DATA_PATH,RESULTS_PATH,"kotliarov2020-subsetcontrastivePRO-0-history.csv.gz"))
+z = sc.read_h5ad(os.path.join(DATA_PATH,"kotliarov2020-totalviRNA-0.h5ad"))
+history_df = pd.read_csv(os.path.join(DATA_PATH,"kotliarov2020-totalviRNA-0-history.csv.gz"), index_col="epoch")
 
 # %%
-z.obs = data["cite"].obs
 sc.pp.neighbors(z, use_rep='X')
 sc.tl.umap(z)
 sc.pl.umap(z, color=['batch', 'cell_type', 'cluster_level2', 'cluster_level3'], ncols=1)
-# %%
 
+# %%
 history_plot_keys = [
-    ['total', 'r', 'c'],
-    ['r', 'r_0', 'r_1',],
-    ['c', 'c1', 'c2',],
-    ['c1', 'c1_0', 'c1_1',],
-    ['c2', 'c2_0', 'c2_1',],
-    ['|∇|',],
+    ['train_loss_step',],
+    ['train_loss_epoch', 'validation_loss',],
+    ['elbo_train', 'elbo_validation',],
+    ['reconstruction_loss_train', 'reconstruction_loss_validation',],
+    ['kl_local_train', 'kl_local_validation',],
 ]
 
 for this_same_plot_keys in history_plot_keys:
